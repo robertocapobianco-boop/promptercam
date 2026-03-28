@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0A0A0C">
+  <meta name="description" content="PrompterCam — Leggi. Registra. Condividi. Teleprompter professionale con registrazione video.">
+  <title>PrompterCam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%23E8C547' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23E8C547' stroke-width='1.5'/%3E%3Cline x1='16' y1='22' x2='16' y2='28' stroke='%23E8C547' stroke-width='1.5'/%3E%3Cline x1='16' y1='4' x2='16' y2='10' stroke='%23E8C547' stroke-width='1.5' opacity='0.4'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- SPLASH SCREEN -->
+  <div id="splash" class="splash">
+    <div class="splash-content">
+      <div class="splash-logo" id="splashLogo"></div>
+      <h1 class="splash-title">PrompterCam</h1>
+      <p class="splash-tagline">Leggi. Registra. Condividi.</p>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div id="onboarding" class="onboarding hidden">
+    <div class="onboarding-slides">
+      <div class="onboarding-slide active" data-slide="0">
+        <div class="onboarding-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="12" y="8" width="40" height="48" rx="4" stroke="#E8C547" stroke-width="2"/><line x1="20" y1="20" x2="44" y2="20" stroke="#E8C547" stroke-width="2" opacity="0.6"/><line x1="20" y1="28" x2="40" y2="28" stroke="#E8C547" stroke-width="2" opacity="0.4"/><line x1="20" y1="36" x2="36" y2="36" stroke="#E8C547" stroke-width="2" opacity="0.3"/></svg>
+        </div>
+        <h2>Scrivi il tuo copione</h2>
+        <p>Crea o importa i tuoi testi. Aggiungi marcatori come [PAUSA] per guidarti durante la lettura.</p>
+      </div>
+      <div class="onboarding-slide" data-slide="1">
+        <div class="onboarding-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="28" r="16" stroke="#E8C547" stroke-width="2"/><circle cx="32" cy="28" r="6" stroke="#E8C547" stroke-width="1.5"/><rect x="24" y="44" width="16" height="8" rx="2" stroke="#E8C547" stroke-width="2"/><line x1="12" y1="20" x2="12" y2="36" stroke="#E8C547" stroke-width="1.5" opacity="0.4"/><line x1="8" y1="24" x2="8" y2="32" stroke="#E8C547" stroke-width="1.5" opacity="0.2"/></svg>
+        </div>
+        <h2>Leggi mentre registri</h2>
+        <p>Il testo scorre sullo schermo mentre la fotocamera registra. Come un vero teleprompter professionale.</p>
+      </div>
+      <div class="onboarding-slide" data-slide="2">
+        <div class="onboarding-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="32" height="24" rx="3" stroke="#E8C547" stroke-width="2"/><polygon points="28,20 28,32 38,26" fill="#E8C547" opacity="0.6"/><path d="M44 20 L56 14 L56 38 L44 32Z" stroke="#E8C547" stroke-width="2" fill="none"/></svg>
+        </div>
+        <h2>Condividi i tuoi video</h2>
+        <p>Rivedi, taglia e condividi le tue registrazioni direttamente dal telefono.</p>
+      </div>
+    </div>
+    <div class="onboarding-nav">
+      <div class="onboarding-dots">
+        <span class="dot active" data-dot="0"></span>
+        <span class="dot" data-dot="1"></span>
+        <span class="dot" data-dot="2"></span>
+      </div>
+      <button class="btn-primary" id="onboardingNext">Avanti</button>
+      <button class="btn-text" id="onboardingSkip">Salta</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="app hidden">
+    
+    <!-- VIEW 1: SCRIPT EDITOR -->
+    <div id="viewScripts" class="view active">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <div class="app-logo-small" id="headerLogo"></div>
+          <h1 class="header-title">PrompterCam</h1>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn" id="btnGlobalSettings" title="Impostazioni globali" data-testid="btn-global-settings">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchScripts" placeholder="Cerca copioni..." data-testid="input-search-scripts">
+        <select id="sortScripts" class="sort-select" data-testid="select-sort-scripts">
+          <option value="modified">Ultima modifica</option>
+          <option value="created">Data creazione</option>
+          <option value="title">Titolo A-Z</option>
+        </select>
+      </div>
+
+      <!-- Script List -->
+      <div id="scriptList" class="script-list" data-testid="script-list"></div>
+
+      <!-- New Script FAB -->
+      <button class="fab" id="btnNewScript" data-testid="btn-new-script">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- SCRIPT EDIT MODAL -->
+    <div id="viewEditScript" class="view">
+      <header class="edit-header">
+        <button class="icon-btn" id="btnBackFromEdit" data-testid="btn-back-from-edit">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <input type="text" id="scriptTitle" class="script-title-input" placeholder="Titolo copione..." data-testid="input-script-title">
+        <div class="edit-actions">
+          <button class="icon-btn" id="btnImportFile" title="Importa file .txt" data-testid="btn-import-file">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+          <button class="icon-btn" id="btnPasteClipboard" title="Incolla dagli appunti" data-testid="btn-paste-clipboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><rect x="4" y="4" width="16" height="18" rx="2"/></svg>
+          </button>
+          <button class="icon-btn" id="btnScriptSettings" title="Impostazioni copione" data-testid="btn-script-settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Cue Markers Toolbar -->
+      <div class="cue-toolbar">
+        <button class="cue-btn" data-cue="[PAUSA]">PAUSA</button>
+        <button class="cue-btn" data-cue="[PAUSA 3]">PAUSA 3s</button>
+        <button class="cue-btn" data-cue="[GUARDA SX]">GUARDA SX</button>
+        <button class="cue-btn" data-cue="[SORRIDI]">SORRIDI</button>
+        <button class="cue-btn" data-cue="[RALLENTA]">RALLENTA</button>
+        <button class="cue-btn" data-cue="[ACCELERA]">ACCELERA</button>
+        <button class="cue-btn" data-cue="---">— Sezione</button>
+      </div>
+
+      <!-- Text Editor -->
+      <textarea id="scriptBody" class="script-body-editor" placeholder="Scrivi il tuo copione qui...&#10;&#10;Usa marcatori come [PAUSA], [SORRIDI] per inserire indicazioni durante la lettura.&#10;&#10;Usa --- per creare separatori di sezione." data-testid="textarea-script-body"></textarea>
+
+      <!-- Footer Stats -->
+      <div class="edit-footer">
+        <span id="charCount" class="stat">0 caratteri</span>
+        <span class="stat-divider">·</span>
+        <span id="wordCount" class="stat">0 parole</span>
+        <span class="stat-divider">·</span>
+        <span id="readTime" class="stat">~0 min</span>
+        <div class="edit-footer-actions">
+          <button class="btn-secondary" id="btnPractice" data-testid="btn-practice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Prova
+          </button>
+          <button class="btn-primary" id="btnStartTeleprompter" data-testid="btn-start-teleprompter">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Registra
+          </button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".txt" class="hidden-input">
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="settingsPanel" class="settings-panel">
+      <div class="settings-backdrop" id="settingsBackdrop"></div>
+      <div class="settings-content">
+        <div class="settings-header">
+          <h2>Impostazioni Teleprompter</h2>
+          <button class="icon-btn" id="btnCloseSettings" data-testid="btn-close-settings">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <div class="setting-group">
+            <label>Velocità scorrimento <span id="speedValue" class="setting-value">5 (150 PPM)</span></label>
+            <input type="range" id="settingSpeed" min="1" max="20" value="5" data-testid="slider-speed">
+          </div>
+          <div class="setting-group">
+            <label>Dimensione carattere <span id="fontSizeValue" class="setting-value">36px</span></label>
+            <input type="range" id="settingFontSize" min="20" max="72" value="36" data-testid="slider-font-size">
+          </div>
+          <div class="setting-group">
+            <label>Famiglia carattere</label>
+            <select id="settingFontFamily" data-testid="select-font-family">
+              <option value="sans-serif">Sans-serif</option>
+              <option value="serif">Serif</option>
+              <option value="monospace">Monospace</option>
+            </select>
+          </div>
+          <div class="setting-group">
+            <label>Colore testo</label>
+            <div class="color-options">
+              <button class="color-opt active" data-color="#F0F0F2" style="background:#F0F0F2" data-testid="color-white"></button>
+              <button class="color-opt" data-color="#FFFDD0" style="background:#FFFDD0" data-testid="color-yellow"></button>
+              <button class="color-opt" data-color="#D0FFD0" style="background:#D0FFD0" data-testid="color-green"></button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label>Allineamento testo</label>
+            <div class="align-options">
+              <button class="align-opt active" data-align="center" data-testid="align-center">Centro</button>
+              <button class="align-opt" data-align="left" data-testid="align-left">Sinistra</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label>Interlinea <span id="lineHeightValue" class="setting-value">1.6</span></label>
+            <input type="range" id="settingLineHeight" min="12" max="25" value="16" data-testid="slider-line-height">
+          </div>
+          <div class="setting-group">
+            <label>Margine orizzontale <span id="paddingValue" class="setting-value">20px</span></label>
+            <input type="range" id="settingPadding" min="10" max="80" value="20" data-testid="slider-padding">
+          </div>
+          <div class="setting-group">
+            <label>Conto alla rovescia</label>
+            <div class="countdown-options">
+              <button class="countdown-opt" data-countdown="0">0s</button>
+              <button class="countdown-opt active" data-countdown="3">3s</button>
+              <button class="countdown-opt" data-countdown="5">5s</button>
+              <button class="countdown-opt" data-countdown="10">10s</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label>Opacità sfondo camera <span id="bgOpacityValue" class="setting-value">70%</span></label>
+            <input type="range" id="settingBgOpacity" min="0" max="90" value="70" data-testid="slider-bg-opacity">
+          </div>
+          <div class="setting-group toggle-group">
+            <label>Modalità specchio</label>
+            <button class="toggle-btn" id="settingMirror" data-testid="toggle-mirror">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </button>
+          </div>
+          <div class="setting-group toggle-group">
+            <label>Scorrimento vocale</label>
+            <button class="toggle-btn" id="settingVoiceScroll" data-testid="toggle-voice-scroll">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: TELEPROMPTER -->
+    <div id="viewTeleprompter" class="view teleprompter-view">
+      <!-- Camera background -->
+      <video id="cameraBackground" class="camera-bg hidden" autoplay playsinline muted></video>
+      <div id="cameraBgOverlay" class="camera-bg-overlay hidden"></div>
+
+      <!-- Countdown overlay -->
+      <div id="countdownOverlay" class="countdown-overlay hidden">
+        <span id="countdownNumber" class="countdown-number">3</span>
+      </div>
+
+      <!-- Top gradient fade -->
+      <div class="tp-fade-top"></div>
+
+      <!-- Reading guideline -->
+      <div class="tp-guideline" id="tpGuideline"></div>
+
+      <!-- Eye-line indicator -->
+      <div class="tp-eyeline" id="tpEyeline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#E8C547" opacity="0.6"><polygon points="12,2 22,22 2,22"/></svg>
+      </div>
+
+      <!-- Scrolling text container -->
+      <div id="tpScrollContainer" class="tp-scroll-container">
+        <div id="tpText" class="tp-text"></div>
+      </div>
+
+      <!-- Bottom gradient fade -->
+      <div class="tp-fade-bottom"></div>
+
+      <!-- Section indicator -->
+      <div id="tpSectionIndicator" class="tp-section-indicator"></div>
+
+      <!-- REC / PRACTICE badge -->
+      <div id="tpRecBadge" class="tp-rec-badge hidden">
+        <span class="rec-dot"></span>
+        <span class="rec-label">REC</span>
+        <span class="rec-timer" id="recTimer">00:00</span>
+      </div>
+
+      <!-- Cue marker overlay -->
+      <div id="tpCueOverlay" class="tp-cue-overlay hidden"></div>
+
+      <!-- Progress bar -->
+      <div class="tp-progress-bar">
+        <div class="tp-progress-fill" id="tpProgressFill"></div>
+      </div>
+
+      <!-- Camera PiP -->
+      <div id="cameraPip" class="camera-pip hidden">
+        <video id="cameraPipVideo" autoplay playsinline muted></video>
+      </div>
+
+      <!-- Timer display -->
+      <div id="tpTimerDisplay" class="tp-timer-display">
+        <div class="timer-row">
+          <span class="timer-label">Trascorso</span>
+          <span class="timer-value" id="timerElapsed">00:00</span>
+        </div>
+        <div class="timer-row">
+          <span class="timer-label">Rimanente</span>
+          <span class="timer-value" id="timerRemaining">--:--</span>
+        </div>
+      </div>
+
+      <!-- Voice scroll indicator -->
+      <div id="voiceIndicator" class="voice-indicator hidden">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8C547" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        <span>Voce</span>
+      </div>
+
+      <!-- Remote connected indicator -->
+      <div id="remoteIndicator" class="remote-indicator hidden">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8C547" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <span>Remoto</span>
+      </div>
+
+      <!-- Touch zones (invisible) -->
+      <div class="tp-touch-zones">
+        <div class="touch-zone touch-left" id="touchLeft"></div>
+        <div class="touch-zone touch-center" id="touchCenter"></div>
+        <div class="touch-zone touch-right" id="touchRight"></div>
+      </div>
+
+      <!-- Control bar -->
+      <div class="tp-controls" id="tpControls">
+        <div class="controls-row-top">
+          <button class="ctrl-btn" id="btnExit" title="Esci" data-testid="btn-exit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="speed-display">
+            <button class="ctrl-btn ctrl-small" id="btnSpeedDown" data-testid="btn-speed-down">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="speed-label" id="speedLabel">5x · 150 PPM</span>
+            <button class="ctrl-btn ctrl-small" id="btnSpeedUp" data-testid="btn-speed-up">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <button class="ctrl-btn" id="btnReset" title="Riavvia" data-testid="btn-reset">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          </button>
+        </div>
+        <div class="controls-row-bottom">
+          <div class="controls-left">
+            <button class="ctrl-btn" id="btnTogglePip" title="Picture-in-Picture" data-testid="btn-toggle-pip">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="9" width="8" height="6" rx="1"/></svg>
+            </button>
+            <button class="ctrl-btn" id="btnToggleCamBg" title="Camera sfondo" data-testid="btn-toggle-cam-bg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+            <button class="ctrl-btn" id="btnSwitchCamera" title="Cambia camera" data-testid="btn-switch-camera">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            </button>
+          </div>
+          <div class="controls-center">
+            <button class="ctrl-btn ctrl-play" id="btnPlayPause" data-testid="btn-play-pause">
+              <svg id="iconPlay" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg id="iconPause" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-record" id="btnRecord" data-testid="btn-record">
+              <span class="record-circle" id="recordCircle"></span>
+            </button>
+          </div>
+          <div class="controls-right">
+            <button class="ctrl-btn" id="btnRemoteControl" title="Controllo remoto" data-testid="btn-remote-control">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            </button>
+            <button class="ctrl-btn" id="btnTpSettings" title="Impostazioni" data-testid="btn-tp-settings">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: VIDEO REVIEW -->
+    <div id="viewReview" class="view review-view">
+      <header class="review-header">
+        <button class="icon-btn" id="btnBackFromReview" data-testid="btn-back-from-review">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2>Rivedi Video</h2>
+        <div class="review-header-actions">
+          <button class="icon-btn" id="btnDeleteTake" title="Elimina" data-testid="btn-delete-take">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Takes List (when multiple) -->
+      <div id="takesList" class="takes-list hidden"></div>
+
+      <!-- Video Player -->
+      <div class="video-container">
+        <video id="reviewVideo" class="review-video" controls playsinline data-testid="video-review"></video>
+        <div class="video-info">
+          <span id="videoDuration" class="video-stat">Durata: --:--</span>
+          <span id="videoSize" class="video-stat">Dimensione: -- MB</span>
+        </div>
+      </div>
+
+      <!-- Trim Controls -->
+      <div class="trim-section">
+        <h3>Taglia video</h3>
+        <div class="trim-controls">
+          <div class="trim-slider-container">
+            <input type="range" id="trimStart" min="0" max="100" value="0" class="trim-slider" data-testid="slider-trim-start">
+            <input type="range" id="trimEnd" min="0" max="100" value="100" class="trim-slider" data-testid="slider-trim-end">
+          </div>
+          <div class="trim-labels">
+            <span id="trimStartLabel">00:00</span>
+            <span id="trimEndLabel">--:--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Actions -->
+      <div class="export-actions">
+        <button class="btn-primary btn-large" id="btnSaveVideo" data-testid="btn-save-video">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Salva su dispositivo
+        </button>
+        <button class="btn-secondary btn-large" id="btnShareVideo" data-testid="btn-share-video">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Condividi
+        </button>
+      </div>
+    </div>
+
+    <!-- REMOTE CONTROL MODAL -->
+    <div id="remoteModal" class="modal hidden">
+      <div class="modal-backdrop" id="remoteBackdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Controllo Remoto</h2>
+          <button class="icon-btn" id="btnCloseRemote" data-testid="btn-close-remote">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-info">Apri questo link su un altro dispositivo per controllare il teleprompter in remoto.</p>
+          <div class="remote-qr" id="remoteQR"></div>
+          <div class="remote-url-display">
+            <input type="text" id="remoteURL" readonly class="remote-url-input" data-testid="input-remote-url">
+            <button class="btn-secondary" id="btnCopyRemoteURL" data-testid="btn-copy-remote-url">Copia</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div id="confirmDialog" class="modal hidden">
+      <div class="modal-backdrop" id="confirmBackdrop"></div>
+      <div class="modal-content modal-small">
+        <h3 id="confirmTitle">Conferma</h3>
+        <p id="confirmMessage">Sei sicuro?</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="confirmCancel">Annulla</button>
+          <button class="btn-primary btn-danger" id="confirmOk">Conferma</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCROLL FINISHED NOTIFICATION -->
+    <div id="scrollFinished" class="scroll-finished-toast hidden">
+      <span>Copione terminato. Vuoi fermare la registrazione?</span>
+      <button class="btn-secondary btn-small" id="btnStopAfterFinish">Ferma</button>
+      <button class="icon-btn btn-small" id="btnDismissFinish">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- REMOTE CONTROL PAGE (separate, lightweight) -->
+  <div id="remoteControlPage" class="remote-control-page hidden">
+    <div class="remote-header">
+      <div class="app-logo-small" id="remoteLogo"></div>
+      <h1>PrompterCam Remote</h1>
+    </div>
+    <div class="remote-status" id="remoteStatus">In attesa di connessione...</div>
+    <div class="remote-controls">
+      <div class="remote-speed">
+        <button class="remote-btn" id="remoteBtnSpeedDown">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <span class="remote-speed-display" id="remoteSpeedDisplay">5x</span>
+        <button class="remote-btn" id="remoteBtnSpeedUp">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <button class="remote-btn remote-play" id="remoteBtnPlayPause">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <div class="remote-secondary">
+        <button class="remote-btn" id="remoteBtnReset">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Riavvia
+        </button>
+      </div>
+      <div class="remote-progress">
+        <div class="remote-progress-bar"><div class="remote-progress-fill" id="remoteProgressFill"></div></div>
+        <span id="remotePosition">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
