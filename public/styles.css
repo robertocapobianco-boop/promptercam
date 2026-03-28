@@ -51,6 +51,12 @@ html, body {
 
 .hidden { display: none !important; }
 
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ========================================
    SPLASH SCREEN
    ======================================== */
@@ -366,9 +372,10 @@ html, body {
   display: none;
   height: 100%;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.view.active { display: flex; }
+.view.active { display: flex; flex: 1; min-height: 0; }
 
 .script-list {
   flex: 1;
@@ -560,6 +567,7 @@ html, body {
 
 .script-body-editor {
   flex: 1;
+  min-height: 0;
   background: var(--bg);
   color: var(--text);
   border: none;
@@ -569,6 +577,7 @@ html, body {
   font-size: 17px;
   line-height: 1.7;
   resize: none;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1073,12 +1082,13 @@ html, body {
   left: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   z-index: 10;
-  background: rgba(10, 10, 12, 0.7);
-  padding: 8px 12px;
+  background: rgba(10, 10, 12, 0.8);
+  padding: 6px 10px;
   border-radius: var(--radius);
   backdrop-filter: blur(10px);
+  pointer-events: none;
 }
 
 .timer-row {
@@ -1661,6 +1671,8 @@ html, body {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 12px;
     padding: 16px 24px 100px;
+    align-content: start;
+    align-items: start;
   }
   
   .script-card { margin-bottom: 0; }
