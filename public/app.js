@@ -105,24 +105,54 @@
   }
 
   // ── Storage Abstraction ──
-  // Uses memory as primary store; syncs to backend API for persistence
+  // Uses localStorage when available (standalone), falls back to in-memory + backend API (iframe)
   const memStore = {};
+  let useLocalStorage = false;
+
+  // Check if localStorage is available (not blocked in iframe)
+  try {
+    localStorage.setItem('__pc_test', '1');
+    localStorage.removeItem('__pc_test');
+    useLocalStorage = true;
+  } catch(e) {
+    useLocalStorage = false;
+  }
 
   function storeSet(key, value) {
     memStore[key] = value;
-    // Fire-and-forget backend sync
-    fetch('/api/store', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value }),
-    }).catch(() => {});
+    if (useLocalStorage) {
+      try { localStorage.setItem(key, value); } catch(e) {}
+    } else {
+      // Fire-and-forget backend sync (for iframe/Perplexity hosting)
+      fetch('/api/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value }),
+      }).catch(() => {});
+    }
   }
 
   function storeGet(key) {
+    if (useLocalStorage) {
+      try { return localStorage.getItem(key); } catch(e) {}
+    }
     return memStore[key] ?? null;
   }
 
   async function storeLoad() {
+    if (useLocalStorage) {
+      // localStorage is synchronous, preload into memStore for consistency
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('promptercam_')) {
+            memStore[k] = localStorage.getItem(k);
+          }
+        }
+      } catch(e) {}
+      return;
+    }
+    // Fallback: load from backend API
     try {
       const res = await fetch('/api/store');
       if (res.ok) {
