@@ -104,35 +104,62 @@
     return Math.round(speed * 30);
   }
 
-  // ── Storage ──
+  // ── Storage Abstraction ──
+  // Uses memory as primary store; syncs to backend API for persistence
+  const memStore = {};
+
+  function storeSet(key, value) {
+    memStore[key] = value;
+    // Fire-and-forget backend sync
+    fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value }),
+    }).catch(() => {});
+  }
+
+  function storeGet(key) {
+    return memStore[key] ?? null;
+  }
+
+  async function storeLoad() {
+    try {
+      const res = await fetch('/api/store');
+      if (res.ok) {
+        const data = await res.json();
+        Object.assign(memStore, data);
+      }
+    } catch(e) {}
+  }
+
   function saveScripts() {
-    try { localStorage.setItem('promptercam_scripts', JSON.stringify(state.scripts)); } catch(e) {}
+    storeSet('promptercam_scripts', JSON.stringify(state.scripts));
   }
 
   function loadScripts() {
     try {
-      const data = localStorage.getItem('promptercam_scripts');
+      const data = storeGet('promptercam_scripts');
       if (data) state.scripts = JSON.parse(data);
     } catch(e) {}
   }
 
   function saveSettings() {
-    try { localStorage.setItem('promptercam_settings', JSON.stringify(state.settings)); } catch(e) {}
+    storeSet('promptercam_settings', JSON.stringify(state.settings));
   }
 
   function loadSettings() {
     try {
-      const data = localStorage.getItem('promptercam_settings');
+      const data = storeGet('promptercam_settings');
       if (data) Object.assign(state.settings, JSON.parse(data));
     } catch(e) {}
   }
 
   function isOnboarded() {
-    try { return localStorage.getItem('promptercam_onboarded') === '1'; } catch(e) { return false; }
+    return storeGet('promptercam_onboarded') === '1';
   }
 
   function setOnboarded() {
-    try { localStorage.setItem('promptercam_onboarded', '1'); } catch(e) {}
+    storeSet('promptercam_onboarded', '1');
   }
 
   // ── Sample script ──
@@ -1452,7 +1479,7 @@ Buona registrazione!`,
   }
 
   // ── Initialization ──
-  function init() {
+  async function init() {
     // Check for remote control mode
     const params = new URLSearchParams(window.location.search);
     if (params.get('remote') === '1') {
@@ -1461,6 +1488,8 @@ Buona registrazione!`,
       return;
     }
 
+    // Load persisted data from backend
+    await storeLoad();
     loadScripts();
     loadSettings();
 
