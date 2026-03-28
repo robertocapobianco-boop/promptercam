@@ -496,8 +496,15 @@ Buona registrazione!`,
           facingMode: state.camera.facingMode,
           width: { ideal: 1920 },
           height: { ideal: 1080 },
+          frameRate: { ideal: 30 },
         },
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: { ideal: 48000 },
+          channelCount: { ideal: 1 },
+        },
       };
       state.camera.stream = await navigator.mediaDevices.getUserMedia(constraints);
       return true;
@@ -888,26 +895,45 @@ Buona registrazione!`,
     if (!state.camera.stream) return;
     if (state.teleprompter.isPractice) return;
     
+    // Stop voice scroll to avoid mic conflict during recording
+    if (state.voiceRecognition) {
+      stopVoiceScroll();
+    }
+    
     state.recording.chunks = [];
     
-    let mimeType = 'video/mp4';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = 'video/webm;codecs=vp9,opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8,opus';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'video/webm';
-        }
+    // Pick best supported codec — prefer mp4 (Safari/iOS), fallback to webm
+    const codecPreference = [
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=h264,opus',
+      'video/webm',
+    ];
+    let mimeType = '';
+    for (const codec of codecPreference) {
+      if (MediaRecorder.isTypeSupported(codec)) {
+        mimeType = codec;
+        break;
       }
     }
     
+    const recorderOptions = {
+      videoBitsPerSecond: 5000000,  // 5 Mbps video
+      audioBitsPerSecond: 128000,   // 128 kbps audio
+    };
+    if (mimeType) recorderOptions.mimeType = mimeType;
+    
     try {
-      state.recording.mediaRecorder = new MediaRecorder(state.camera.stream, {
-        mimeType,
-        videoBitsPerSecond: 4000000,
-      });
+      state.recording.mediaRecorder = new MediaRecorder(state.camera.stream, recorderOptions);
     } catch (e) {
-      state.recording.mediaRecorder = new MediaRecorder(state.camera.stream);
+      // Fallback without options if device doesn't support them
+      try {
+        state.recording.mediaRecorder = new MediaRecorder(state.camera.stream, { mimeType: mimeType || undefined });
+      } catch (e2) {
+        state.recording.mediaRecorder = new MediaRecorder(state.camera.stream);
+      }
     }
     
     state.recording.mediaRecorder.ondataavailable = (e) => {
@@ -920,7 +946,7 @@ Buona registrazione!`,
       finishRecording();
     };
     
-    state.recording.mediaRecorder.start(500); // 500ms chunks
+    state.recording.mediaRecorder.start(1000); // 1s chunks for cleaner audio boundaries
     state.recording.startTime = Date.now();
     state.teleprompter.isRecording = true;
     
