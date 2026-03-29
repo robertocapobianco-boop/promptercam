@@ -236,11 +236,44 @@ Buona registrazione!`,
   }
 
   // ── Navigation ──
-  function showView(viewId) {
+  // ── Navigation with History API (iOS back gesture support) ──
+  let currentViewId = 'viewScripts';
+  let navigatingBack = false;
+
+  function showView(viewId, pushHistory = true) {
     $$('.view').forEach(v => v.classList.remove('active'));
     const view = $(`#${viewId}`);
     if (view) view.classList.add('active');
+    
+    if (pushHistory && viewId !== currentViewId) {
+      try {
+        history.pushState({ view: viewId }, '', '');
+      } catch(e) {}
+    }
+    currentViewId = viewId;
   }
+
+  // Handle browser back button / iOS swipe-back gesture
+  window.addEventListener('popstate', (e) => {
+    navigatingBack = true;
+    const targetView = e.state?.view || 'viewScripts';
+    
+    if (currentViewId === 'viewTeleprompter') {
+      doExitTeleprompter();
+    } else if (currentViewId === 'viewEditScript') {
+      saveCurrentScript();
+      showView('viewScripts', false);
+      renderScripts();
+    } else if (currentViewId === 'viewReview') {
+      state.takes.forEach(t => { if (t.url) URL.revokeObjectURL(t.url); });
+      state.takes = [];
+      showView('viewScripts', false);
+      renderScripts();
+    } else {
+      showView(targetView, false);
+    }
+    navigatingBack = false;
+  });
 
   // ── Script List ──
   function renderScripts() {
@@ -674,11 +707,14 @@ Buona registrazione!`,
     // Wake lock
     requestWakeLock();
 
-    // Calculate total height after render
+    // Calculate total height after render and init scroll position
     requestAnimationFrame(() => {
       const container = $('#tpScrollContainer');
       state.teleprompter.totalHeight = tpText.scrollHeight - container.clientHeight;
       if (state.teleprompter.totalHeight < 0) state.teleprompter.totalHeight = tpText.scrollHeight;
+      
+      // Initialize scroll to top via transform
+      applyScroll(0);
 
       // Countdown
       if (s.countdown > 0) {
@@ -740,6 +776,19 @@ Buona registrazione!`,
   }
 
   // ── Scroll Animation ──
+  // Use transform-based scrolling for iOS Safari compatibility
+  function applyScroll(pos) {
+    const tpText = $('#tpText');
+    if (tpText) {
+      tpText.style.transform = state.settings.mirror 
+        ? `scaleX(-1) translateY(${-pos}px)` 
+        : `translateY(${-pos}px)`;
+    }
+    // Also set scrollTop as fallback for offset calculations
+    const container = $('#tpScrollContainer');
+    if (container) container.scrollTop = pos;
+  }
+
   function startScrolling() {
     if (state.teleprompter.isPlaying) return;
     state.teleprompter.isPlaying = true;
@@ -769,7 +818,7 @@ Buona registrazione!`,
         onScrollFinished();
       }
       
-      container.scrollTop = state.teleprompter.scrollPosition;
+      applyScroll(state.teleprompter.scrollPosition);
       
       // Update progress
       const progress = maxScroll > 0 ? state.teleprompter.scrollPosition / maxScroll : 0;
@@ -831,7 +880,7 @@ Buona registrazione!`,
   function doResetScroll() {
     stopScrolling();
     state.teleprompter.scrollPosition = 0;
-    $('#tpScrollContainer').scrollTop = 0;
+    applyScroll(0);
     $('#tpProgressFill').style.width = '0%';
     state.teleprompter.currentSection = 0;
     updateSectionIndicator();
@@ -846,7 +895,7 @@ Buona registrazione!`,
 
   function updateCurrentSection() {
     const container = $('#tpScrollContainer');
-    const scrollTop = container.scrollTop;
+    const scrollTop = state.teleprompter.scrollPosition;
     const guideline = container.clientHeight * 0.35;
     const target = scrollTop + guideline;
     
@@ -870,7 +919,7 @@ Buona registrazione!`,
   
   function checkCueMarkers() {
     const container = $('#tpScrollContainer');
-    const scrollTop = container.scrollTop;
+    const scrollTop = state.teleprompter.scrollPosition;
     const guideline = container.clientHeight * 0.35;
     const target = scrollTop + guideline;
     
@@ -1422,12 +1471,16 @@ Buona registrazione!`,
     releaseWakeLock();
     stopCamera();
     shownCues.clear();
+    // Reset text transform
+    const tpText = $('#tpText');
+    if (tpText) tpText.style.transform = '';
     document.removeEventListener('keydown', handleTeleprompterKeys);
     
+    const dontPush = navigatingBack;
     if (state.takes.length > 0) {
       showVideoReview();
     } else {
-      showView('viewEditScript');
+      showView('viewEditScript', !dontPush);
     }
   }
 
@@ -1453,10 +1506,10 @@ Buona registrazione!`,
       const deltaY = touchStartY - e.touches[0].clientY;
       touchStartY = e.touches[0].clientY;
       
-      state.teleprompter.scrollPosition = Math.max(0, state.teleprompter.scrollPosition + deltaY);
-      container.scrollTop = state.teleprompter.scrollPosition;
-      
       const maxScroll = $('#tpText').scrollHeight - container.clientHeight;
+      state.teleprompter.scrollPosition = Math.max(0, Math.min(state.teleprompter.scrollPosition + deltaY, maxScroll));
+      applyScroll(state.teleprompter.scrollPosition);
+      
       const progress = maxScroll > 0 ? state.teleprompter.scrollPosition / maxScroll : 0;
       $('#tpProgressFill').style.width = `${Math.min(100, progress * 100)}%`;
     }, { passive: true });

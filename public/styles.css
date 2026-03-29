@@ -910,6 +910,7 @@ html, body {
   inset: 0;
   overflow: hidden;
   z-index: 2;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tp-text {
@@ -918,7 +919,7 @@ html, body {
   will-change: transform;
 }
 
-.tp-text.mirror { transform: scaleX(-1); }
+/* mirror is now handled via JS applyScroll() together with translateY */
 
 .tp-word { display: inline; }
 .tp-cue {
